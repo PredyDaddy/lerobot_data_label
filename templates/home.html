@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/static/js/alpine.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/lerobot-logo.css">
+    <title>LeRobot数据管理平台</title>
+</head>
+
+<body class="bg-slate-950 text-gray-200 min-h-screen" x-data="homePageData()">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="lerobot-logo text-4xl mb-4">LeRobot</div>
+            <h1 class="text-3xl font-bold mb-2">数据管理平台</h1>
+            <p class="text-gray-400 text-lg">为机器人学习提供数据管理、清洗和标注服务</p>
+        </div>
+
+        <!-- 数据集选择卡片 -->
+        <div class="bg-slate-900 rounded-lg p-6 mb-8 border border-slate-700">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7z"></path>
+                </svg>
+                数据集选择
+            </h2>
+
+            <!-- 当前数据集显示 -->
+            <div class="mb-4 p-3 bg-slate-800 rounded border" x-show="currentDataset">
+                <div class="text-sm text-gray-400 mb-1">当前数据集:</div>
+                <div class="font-mono text-sm" x-text="currentDataset"></div>
+                <div class="text-xs text-gray-500 mt-1" x-show="datasetInfo">
+                    <span x-text="datasetInfo?.name || ''"></span>
+                    <span x-show="datasetInfo?.total_episodes">
+                        | <span x-text="datasetInfo.total_episodes"></span> episodes
+                    </span>
+                    <span x-show="datasetInfo?.fps">
+                        | <span x-text="datasetInfo.fps"></span> fps
+                    </span>
+                </div>
+            </div>
+
+            <!-- 数据集路径输入 -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">数据集路径:</label>
+                <div class="flex gap-2">
+                    <input
+                        type="text"
+                        x-model="newDatasetPath"
+                        @keyup.enter="selectDataset()"
+                        placeholder="/path/to/your/dataset"
+                        class="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded focus:outline-none focus:border-blue-500"
+                    >
+                    <button
+                        @click="selectDataset()"
+                        :disabled="!newDatasetPath || loading"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-medium transition-colors"
+                        x-text="loading ? '验证中...' : '验证'"
+                    ></button>
+                </div>
+            </div>
+
+            <!-- 验证状态 -->
+            <div x-show="validationMessage" class="mb-4 p-3 rounded" :class="{
+                'bg-green-900 border border-green-700 text-green-200': validationStatus === 'success',
+                'bg-red-900 border border-red-700 text-red-200': validationStatus === 'error',
+                'bg-yellow-900 border border-yellow-700 text-yellow-200': validationStatus === 'warning'
+            }">
+                <div class="flex items-center">
+                    <svg x-show="validationStatus === 'success'" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <svg x-show="validationStatus === 'error'" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span x-text="validationMessage"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能入口卡片 -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <!-- 标注功能 -->
+            <div class="bg-slate-900 rounded-lg p-6 border border-slate-700 hover:border-blue-500 transition-colors">
+                <div class="flex items-center mb-4">
+                    <svg class="w-8 h-8 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold">视频标注</h3>
+                </div>
+                <p class="text-gray-400 mb-4">对机器人操作视频进行帧级精确标注，标记动作类型和描述。</p>
+                <ul class="text-sm text-gray-500 mb-6 space-y-1">
+                    <li>• 多视频同步播放</li>
+                    <li>• 帧级精确控制</li>
+                    <li>• 多段标注管理</li>
+                    <li>• 自动保存机制</li>
+                </ul>
+                <button
+                    @click="goToAnnotation()"
+                    :disabled="!hasValidDataset"
+                    class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-medium transition-colors"
+                >
+                    开始标注
+                </button>
+            </div>
+
+            <!-- 数据清洗功能 -->
+            <div class="bg-slate-900 rounded-lg p-6 border border-slate-700 hover:border-green-500 transition-colors">
+                <div class="flex items-center mb-4">
+                    <svg class="w-8 h-8 mr-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold">数据清洗平台</h3>
+                </div>
+                <p class="text-gray-400 mb-4">检测和删除静止帧，清理数据质量，提升机器人学习效果。</p>
+                <ul class="text-sm text-gray-500 mb-6 space-y-1">
+                    <li>• 静止帧智能检测</li>
+                    <li>• 批量数据清洗</li>
+                    <li>• 时间序列可视化</li>
+                    <li>• 数据质量分析</li>
+                </ul>
+                <button
+                    @click="goToVisualization()"
+                    :disabled="!hasValidDataset"
+                    class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-medium transition-colors"
+                >
+                    数据清洗平台
+                </button>
+            </div>
+
+
+        </div>
+
+        <!-- 快捷操作提示 -->
+        <div class="bg-slate-900 rounded-lg p-4 border border-slate-700">
+            <h4 class="font-medium mb-2 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                快速开始
+            </h4>
+            <div class="text-sm text-gray-400 grid md:grid-cols-2 gap-4">
+                <div>
+                    <strong>第一次使用:</strong>
+                    <ol class="list-decimal list-inside mt-1 space-y-1">
+                        <li>输入数据集的完整路径</li>
+                        <li>点击"验证"确认数据集有效</li>
+                        <li>选择"视频标注"或"数据清洗平台"</li>
+                    </ol>
+                </div>
+                <div>
+                    <strong>数据集要求:</strong>
+                    <ul class="list-disc list-inside mt-1 space-y-1">
+                        <li>包含 meta/info.json 文件</li>
+                        <li>包含 videos/ 目录</li>
+                        <li>符合 LeRobot 数据格式</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function homePageData() {
+            return {
+                currentDataset: '{{ current_dataset_path }}',
+                newDatasetPath: '',
+                loading: false,
+                validationMessage: '',
+                validationStatus: '',
+                datasetInfo: null,
+
+                get hasValidDataset() {
+                    return this.currentDataset && this.validationStatus === 'success';
+                },
+
+                async init() {
+                    // 初始化时验证当前数据集
+                    if (this.currentDataset) {
+                        this.newDatasetPath = this.currentDataset;
+                        await this.validateCurrentDataset();
+                    }
+                },
+
+                async validateCurrentDataset() {
+                    try {
+                        const response = await fetch('/api/dataset/current');
+                        const data = await response.json();
+
+                        if (data.ok) {
+                            this.validationStatus = 'success';
+                            this.validationMessage = '数据集验证成功';
+                            this.datasetInfo = data;
+                        }
+                    } catch (error) {
+                        console.error('Error validating current dataset:', error);
+                    }
+                },
+
+                async selectDataset() {
+                    if (!this.newDatasetPath) {
+                        this.validationMessage = '请输入数据集路径';
+                        this.validationStatus = 'error';
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.validationMessage = '';
+                    this.validationStatus = '';
+
+                    try {
+                        const response = await fetch('/api/dataset/select', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                dataset_path: this.newDatasetPath
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.ok) {
+                            this.currentDataset = data.dataset.path;
+                            this.datasetInfo = data.dataset;
+                            this.validationStatus = 'success';
+                            this.validationMessage = `数据集验证成功: ${data.dataset.name} (${data.dataset.total_episodes} episodes)`;
+                        } else {
+                            this.validationStatus = 'error';
+                            this.validationMessage = data.error || '数据集验证失败';
+                        }
+                    } catch (error) {
+                        this.validationStatus = 'error';
+                        this.validationMessage = '网络错误，请检查连接';
+                        console.error('Error selecting dataset:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                goToAnnotation() {
+                    if (this.hasValidDataset) {
+                        window.location.href = '/annotate/0';
+                    }
+                },
+
+                goToVisualization() {
+                    if (this.hasValidDataset) {
+                        window.location.href = '/episode_0';
+                    }
+                },
+
+
+            };
+        }
+    </script>
+</body>
+
+</html>

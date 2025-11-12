@@ -1,0 +1,13 @@
+/* LeRobot Logo placeholder - using text instead of image for now */
+.lerobot-logo {
+    color: #22c55e;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    padding: 8px;
+    margin-bottom: 16px;
+}
+.lerobot-logo::before {
+    content: "🤖 ";
+    font-size: 24px;
+}

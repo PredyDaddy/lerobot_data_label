@@ -1,0 +1,5 @@
+/* Tailwind CSS will be loaded from CDN script that generates styles on-demand */
+/* This is a placeholder - the actual Tailwind CDN script will generate CSS styles dynamically */
+* {
+  box-sizing: border-box;
+}

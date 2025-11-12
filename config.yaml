@@ -1,0 +1,32 @@
+# LeRobot Visualizer Configuration
+
+# 应用配置
+app:
+  host: "127.0.0.1"        # 绑定地址
+  port: 9090               # 端口号
+  debug: false             # 调试模式
+
+# 数据集配置
+dataset:
+  path: "/mnt/data/kouyouyi/dataset/bottle_handover"
+  cache_enabled: false     # 数据缓存开关
+
+# UI配置
+ui:
+  episodes_per_page: 50    # 每页显示的episode数量
+  default_video_keys:      # 默认视频源
+    - "laptop"
+    - "phone"
+  chart_height: 400        # 图表高度(像素)
+  video_width: 640         # 视频播放器宽度
+
+# 日志配置
+logging:
+  level: "INFO"            # 日志级别: DEBUG/INFO/WARNING/ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 性能配置
+performance:
+  max_csv_size: 10485760   # 最大CSV文件大小 (10MB)
+  request_timeout: 30      # 请求超时时间(秒)
+  static_cache_timeout: 3600  # 静态文件缓存时间(秒)
